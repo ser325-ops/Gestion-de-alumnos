@@ -13,15 +13,19 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
         }
+        .tab-button.active {
+            @apply text-blue-600 border-blue-600;
+        }
+        .group-tab-button.active {
+            @apply bg-blue-500 text-white shadow-md;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6">
 
-    <!-- Contenedor principal de la aplicación -->
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 sm:p-8">
         <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Gestión de Alumnos por Grupos</h1>
 
-        <!-- Pestañas para cambiar entre listas de grupos y el formulario de alumnos faltantes -->
         <div class="flex border-b border-gray-200 mb-6">
             <button id="tab-lists" class="tab-button flex-1 py-3 px-4 text-center text-gray-600 font-semibold rounded-t-lg transition-colors duration-200 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-300 focus:outline-none">
                 Listas de Grupos
@@ -31,7 +35,6 @@
             </button>
         </div>
 
-        <!-- Sección de listas de alumnos por grupo -->
         <div id="lists-section" class="tab-content transition-opacity duration-300">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Listas de Clases</h2>
             
@@ -39,22 +42,31 @@
                 Cargando listas...
             </div>
             
-            <div id="lists-container" class="space-y-6">
-                <!-- Las listas de grupos se renderizarán aquí dinámicamente -->
+            <div id="group-tabs" class="flex flex-wrap gap-2 mb-4">
+                <!-- Pestañas de grupos se renderizarán aquí -->
+            </div>
+            
+            <div id="group-lists-container" class="space-y-6">
+                <!-- Las listas de alumnos se renderizarán aquí -->
             </div>
         </div>
 
-        <!-- Sección para agregar alumnos faltantes -->
         <div id="form-section" class="tab-content hidden transition-opacity duration-300">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Añadir Alumno Faltante</h2>
             <form id="add-student-form" class="space-y-4">
                 <div>
-                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Alumno</label>
-                    <input type="text" id="student-name" name="student-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: Juan Pérez">
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Alumno
+                        <span class="text-xs text-gray-500">(Empieza con los apellidos)</span>
+                    </label>
+                    <input type="text" id="student-name" name="student-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: García López Juan">
                 </div>
                 <div>
-                    <label for="student-group" class="block text-sm font-medium text-gray-700 mb-1">Grupo al que pertenece</label>
-                    <input type="text" id="student-group" name="student-group" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: 3A">
+                    <label for="student-group" class="block text-sm font-medium text-gray-700 mb-1">
+                        Grupo al que pertenece
+                        <span class="text-xs text-gray-500">(Ej: 3AM para Tercero A Matutino)</span>
+                    </label>
+                    <input type="text" id="student-group" name="student-group" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: 3AM">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
                     Añadir Alumno
@@ -82,11 +94,8 @@
     </div>
 
     <script type="module">
-        // ¡¡¡IMPORTANTE!!!
-        // Pega aquí la URL que obtuviste al desplegar tu Google Apps Script.
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXfuPumu3gv1d4zab8_sY5X407orXcJYGkc4UVE5G7o7ITWMKBRZk2GQMWFZtyzXsL/exec"; 
 
-        // Referencias a los elementos del DOM
         const tabListsBtn = document.getElementById('tab-lists');
         const tabFormBtn = document.getElementById('tab-form');
         const listsSection = document.getElementById('lists-section');
@@ -99,11 +108,12 @@
         const loadingMissing = document.getElementById('loading-missing');
         const formMessage = document.getElementById('form-message');
         const exportMessage = document.getElementById('export-message');
+        const groupTabsContainer = document.getElementById('group-tabs');
+        const groupListsContainer = document.getElementById('group-lists-container');
 
-        // Funciones para interactuar con la Web App
         async function fetchStudentLists() {
             if (APPS_SCRIPT_URL === "PEGA_AQUÍ_LA_URL_DE_TU_WEB_APP") {
-                listsContainer.innerHTML = '<p class="text-red-500 text-center font-semibold">Error: Debes pegar la URL de tu Web App en el archivo HTML para que la aplicación funcione.</p>';
+                groupListsContainer.innerHTML = '<p class="text-red-500 text-center font-semibold">Error: Debes pegar la URL de tu Web App en el archivo HTML para que la aplicación funcione.</p>';
                 loadingLists.style.display = 'none';
                 return;
             }
@@ -113,29 +123,54 @@
                 if (!response.ok) throw new Error('Error al obtener las listas de la API.');
                 const data = await response.json();
                 
-                listsContainer.innerHTML = '';
+                groupTabsContainer.innerHTML = '';
+                groupListsContainer.innerHTML = '';
+
                 if (Object.keys(data).length === 0) {
-                    listsContainer.innerHTML = '<p class="text-gray-500 text-center">No hay listas de grupos disponibles en tu Hoja de Cálculo.</p>';
+                    groupListsContainer.innerHTML = '<p class="text-gray-500 text-center">No hay listas de grupos disponibles en tu Hoja de Cálculo.</p>';
                 } else {
+                    let isFirstGroup = true;
                     for (const group in data) {
                         const students = data[group];
-                        const groupCard = document.createElement('div');
-                        groupCard.className = 'bg-gray-50 p-6 rounded-xl shadow-inner';
-                        groupCard.innerHTML = `
+                        
+                        const tabButton = document.createElement('button');
+                        tabButton.className = `group-tab-button px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus:outline-none ${isFirstGroup ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+                        tabButton.textContent = group;
+                        tabButton.setAttribute('data-group', group);
+                        groupTabsContainer.appendChild(tabButton);
+                        
+                        const groupList = document.createElement('div');
+                        groupList.id = `list-${group}`;
+                        groupList.className = `group-list-content bg-gray-50 p-6 rounded-xl shadow-inner ${isFirstGroup ? '' : 'hidden'}`;
+                        groupList.innerHTML = `
                             <h3 class="text-xl font-semibold text-gray-800 mb-3">${group}</h3>
                             <ul class="list-disc list-inside space-y-1 text-gray-700">
                                 ${students.length > 0 ? students.map(s => `<li>${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
                             </ul>
                         `;
-                        listsContainer.appendChild(groupCard);
+                        groupListsContainer.appendChild(groupList);
+                        
+                        tabButton.addEventListener('click', () => {
+                            displayGroupList(group);
+                        });
+                        
+                        isFirstGroup = false;
                     }
                 }
             } catch (error) {
                 console.error("Error al obtener las listas:", error);
-                listsContainer.innerHTML = '<p class="text-red-500 text-center">Error al cargar las listas. Asegúrate de que el Apps Script esté desplegado correctamente y la URL sea correcta.</p>';
+                groupListsContainer.innerHTML = '<p class="text-red-500 text-center">Error al cargar las listas. Asegúrate de que el Apps Script esté desplegado correctamente y la URL sea correcta.</p>';
             } finally {
                 loadingLists.style.display = 'none';
             }
+        }
+        
+        function displayGroupList(groupName) {
+            document.querySelectorAll('.group-list-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.group-tab-button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`list-${groupName}`).classList.remove('hidden');
+            document.querySelector(`[data-group="${groupName}"]`).classList.add('active');
         }
 
         async function fetchMissingStudents() {
@@ -194,7 +229,6 @@
             }
         }
 
-        // Manejo del formulario para añadir alumnos
         addStudentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const studentName = document.getElementById('student-name').value.trim();
@@ -208,12 +242,10 @@
             addMissingStudent(studentName, studentGroup);
         });
 
-        // Maneja el botón de exportación de datos (ahora solo muestra la lista)
         exportDataBtn.addEventListener('click', () => {
              showExportMessage('La hoja de cálculo de alumnos faltantes se actualiza en tiempo real.', 'text-blue-600');
         });
 
-        // Funciones de utilidad para el UI
         const showFormMessage = (message, colorClass) => {
             formMessage.textContent = message;
             formMessage.className = `mt-4 text-center text-sm font-medium ${colorClass}`;
@@ -232,20 +264,19 @@
             }, 4000);
         };
 
-        // Manejo de las pestañas
         const switchTab = (tabId) => {
             const tabs = [tabListsBtn, tabFormBtn];
             const sections = [listsSection, formSection];
 
-            tabs.forEach(tab => tab.classList.remove('text-blue-600', 'border-blue-600'));
+            tabs.forEach(tab => tab.classList.remove('active'));
             sections.forEach(section => section.classList.add('hidden'));
 
             if (tabId === 'lists') {
-                tabListsBtn.classList.add('text-blue-600', 'border-blue-600');
+                tabListsBtn.classList.add('active');
                 listsSection.classList.remove('hidden');
                 fetchStudentLists();
             } else if (tabId === 'form') {
-                tabFormBtn.classList.add('text-blue-600', 'border-blue-600');
+                tabFormBtn.classList.add('active');
                 formSection.classList.remove('hidden');
                 fetchMissingStudents();
             }
@@ -254,7 +285,6 @@
         tabListsBtn.addEventListener('click', () => switchTab('lists'));
         tabFormBtn.addEventListener('click', () => switchTab('form'));
 
-        // Inicializa la app cuando la ventana esté cargada
         window.onload = () => {
             switchTab('lists');
         };
