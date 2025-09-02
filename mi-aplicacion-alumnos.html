@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Alumnos con Google Sheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6">
+
+    <!-- Contenedor principal de la aplicación -->
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 sm:p-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Gestión de Alumnos por Grupos</h1>
+
+        <!-- Pestañas para cambiar entre listas de grupos y el formulario de alumnos faltantes -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <button id="tab-lists" class="tab-button flex-1 py-3 px-4 text-center text-gray-600 font-semibold rounded-t-lg transition-colors duration-200 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-300 focus:outline-none">
+                Listas de Grupos
+            </button>
+            <button id="tab-form" class="tab-button flex-1 py-3 px-4 text-center text-gray-600 font-semibold rounded-t-lg transition-colors duration-200 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-300 focus:outline-none">
+                Alumnos Faltantes
+            </button>
+        </div>
+
+        <!-- Sección de listas de alumnos por grupo -->
+        <div id="lists-section" class="tab-content transition-opacity duration-300">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Listas de Clases</h2>
+            
+            <div id="loading-lists" class="text-center text-gray-500 py-10">
+                Cargando listas...
+            </div>
+            
+            <div id="lists-container" class="space-y-6">
+                <!-- Las listas de grupos se renderizarán aquí dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Sección para agregar alumnos faltantes -->
+        <div id="form-section" class="tab-content hidden transition-opacity duration-300">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Añadir Alumno Faltante</h2>
+            <form id="add-student-form" class="space-y-4">
+                <div>
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Alumno</label>
+                    <input type="text" id="student-name" name="student-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: Juan Pérez">
+                </div>
+                <div>
+                    <label for="student-group" class="block text-sm font-medium text-gray-700 mb-1">Grupo al que pertenece</label>
+                    <input type="text" id="student-group" name="student-group" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" placeholder="Ej: 3A">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+                    Añadir Alumno
+                </button>
+            </form>
+
+            <div id="form-message" class="mt-4 text-center text-sm font-medium hidden"></div>
+
+            <div class="mt-8">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Alumnos Registrados</h2>
+                <div id="loading-missing" class="text-center text-gray-500 py-10" style="display: none;">
+                    Cargando alumnos...
+                </div>
+                <ul id="missing-students-list" class="space-y-2">
+                    <!-- La lista de alumnos faltantes se renderizará aquí -->
+                </ul>
+                <div class="text-center mt-6">
+                    <button id="export-data-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">
+                        Actualizar Vaciado de Datos
+                    </button>
+                </div>
+                <div id="export-message" class="mt-4 text-center text-sm font-medium hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // ¡¡¡IMPORTANTE!!!
+        // Pega aquí la URL que obtuviste al desplegar tu Google Apps Script.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxXfuPumu3gv1d4zab8_sY5X407orXcJYGkc4UVE5G7o7ITWMKBRZk2GQMWFZtyzXsL/exec"; 
+
+        // Referencias a los elementos del DOM
+        const tabListsBtn = document.getElementById('tab-lists');
+        const tabFormBtn = document.getElementById('tab-form');
+        const listsSection = document.getElementById('lists-section');
+        const formSection = document.getElementById('form-section');
+        const listsContainer = document.getElementById('lists-container');
+        const addStudentForm = document.getElementById('add-student-form');
+        const missingStudentsList = document.getElementById('missing-students-list');
+        const exportDataBtn = document.getElementById('export-data-btn');
+        const loadingLists = document.getElementById('loading-lists');
+        const loadingMissing = document.getElementById('loading-missing');
+        const formMessage = document.getElementById('form-message');
+        const exportMessage = document.getElementById('export-message');
+
+        // Funciones para interactuar con la Web App
+        async function fetchStudentLists() {
+            if (APPS_SCRIPT_URL === "PEGA_AQUÍ_LA_URL_DE_TU_WEB_APP") {
+                listsContainer.innerHTML = '<p class="text-red-500 text-center font-semibold">Error: Debes pegar la URL de tu Web App en el archivo HTML para que la aplicación funcione.</p>';
+                loadingLists.style.display = 'none';
+                return;
+            }
+            loadingLists.style.display = 'block';
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getLists`);
+                if (!response.ok) throw new Error('Error al obtener las listas de la API.');
+                const data = await response.json();
+                
+                listsContainer.innerHTML = '';
+                if (Object.keys(data).length === 0) {
+                    listsContainer.innerHTML = '<p class="text-gray-500 text-center">No hay listas de grupos disponibles en tu Hoja de Cálculo.</p>';
+                } else {
+                    for (const group in data) {
+                        const students = data[group];
+                        const groupCard = document.createElement('div');
+                        groupCard.className = 'bg-gray-50 p-6 rounded-xl shadow-inner';
+                        groupCard.innerHTML = `
+                            <h3 class="text-xl font-semibold text-gray-800 mb-3">${group}</h3>
+                            <ul class="list-disc list-inside space-y-1 text-gray-700">
+                                ${students.length > 0 ? students.map(s => `<li>${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
+                            </ul>
+                        `;
+                        listsContainer.appendChild(groupCard);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al obtener las listas:", error);
+                listsContainer.innerHTML = '<p class="text-red-500 text-center">Error al cargar las listas. Asegúrate de que el Apps Script esté desplegado correctamente y la URL sea correcta.</p>';
+            } finally {
+                loadingLists.style.display = 'none';
+            }
+        }
+
+        async function fetchMissingStudents() {
+            loadingMissing.style.display = 'block';
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getMissing`);
+                if (!response.ok) throw new Error('Error al obtener los alumnos faltantes de la API.');
+                const data = await response.json();
+                
+                missingStudentsList.innerHTML = '';
+                if (data.length === 0) {
+                    missingStudentsList.innerHTML = '<p class="text-gray-500 text-center">No hay alumnos faltantes registrados.</p>';
+                } else {
+                    data.forEach(student => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'bg-gray-50 p-4 rounded-lg flex justify-between items-center shadow-sm';
+                        listItem.innerHTML = `
+                            <div>
+                                <span class="font-medium text-gray-700">${student.nombre}</span>
+                                <span class="text-sm text-gray-500 ml-2">(${student.grupo})</span>
+                            </div>
+                        `;
+                        missingStudentsList.appendChild(listItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error al obtener los alumnos faltantes:", error);
+                missingStudentsList.innerHTML = '<p class="text-red-500 text-center">Error al cargar los alumnos faltantes. Inténtalo de nuevo más tarde.</p>';
+            } finally {
+                loadingMissing.style.display = 'none';
+            }
+        }
+
+        async function addMissingStudent(studentName, studentGroup) {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'addMissing',
+                        nombre: studentName,
+                        grupo: studentGroup,
+                    })
+                });
+                
+                showFormMessage('Alumno añadido con éxito. La lista se actualizará en breve.', 'text-green-500');
+                addStudentForm.reset();
+                setTimeout(fetchMissingStudents, 1500);
+
+            } catch (error) {
+                console.error("Error al añadir el alumno:", error);
+                showFormMessage('Hubo un error al añadir el alumno. Inténtalo de nuevo.', 'text-red-500');
+            }
+        }
+
+        // Manejo del formulario para añadir alumnos
+        addStudentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentName = document.getElementById('student-name').value.trim();
+            const studentGroup = document.getElementById('student-group').value.trim();
+
+            if (!studentName || !studentGroup) {
+                showFormMessage('Por favor, completa todos los campos.', 'text-red-500');
+                return;
+            }
+
+            addMissingStudent(studentName, studentGroup);
+        });
+
+        // Maneja el botón de exportación de datos (ahora solo muestra la lista)
+        exportDataBtn.addEventListener('click', () => {
+             showExportMessage('La hoja de cálculo de alumnos faltantes se actualiza en tiempo real.', 'text-blue-600');
+        });
+
+        // Funciones de utilidad para el UI
+        const showFormMessage = (message, colorClass) => {
+            formMessage.textContent = message;
+            formMessage.className = `mt-4 text-center text-sm font-medium ${colorClass}`;
+            formMessage.style.display = 'block';
+            setTimeout(() => {
+                formMessage.style.display = 'none';
+            }, 4000);
+        };
+
+        const showExportMessage = (message, colorClass) => {
+            exportMessage.textContent = message;
+            exportMessage.className = `mt-4 text-center text-sm font-medium ${colorClass}`;
+            exportMessage.style.display = 'block';
+            setTimeout(() => {
+                exportMessage.style.display = 'none';
+            }, 4000);
+        };
+
+        // Manejo de las pestañas
+        const switchTab = (tabId) => {
+            const tabs = [tabListsBtn, tabFormBtn];
+            const sections = [listsSection, formSection];
+
+            tabs.forEach(tab => tab.classList.remove('text-blue-600', 'border-blue-600'));
+            sections.forEach(section => section.classList.add('hidden'));
+
+            if (tabId === 'lists') {
+                tabListsBtn.classList.add('text-blue-600', 'border-blue-600');
+                listsSection.classList.remove('hidden');
+                fetchStudentLists();
+            } else if (tabId === 'form') {
+                tabFormBtn.classList.add('text-blue-600', 'border-blue-600');
+                formSection.classList.remove('hidden');
+                fetchMissingStudents();
+            }
+        };
+
+        tabListsBtn.addEventListener('click', () => switchTab('lists'));
+        tabFormBtn.addEventListener('click', () => switchTab('form'));
+
+        // Inicializa la app cuando la ventana esté cargada
+        window.onload = () => {
+            switchTab('lists');
+        };
+    </script>
+</body>
+</html>
