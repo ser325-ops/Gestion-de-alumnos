@@ -160,7 +160,7 @@
                         groupList.innerHTML = `
                             <h3 class="text-xl font-semibold text-gray-800 mb-3">${group}</h3>
                             <ol class="list-decimal list-inside space-y-1 text-gray-700">
-                                ${students.length > 0 ? students.map(s => `<li>${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
+                                ${students.length > 0 ? students.map(s => `<li class="whitespace-nowrap overflow-hidden text-ellipsis">${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
                             </ol>
                         `;
                         groupListsContainer.appendChild(groupList);
