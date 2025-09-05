@@ -163,7 +163,7 @@
                         groupList.innerHTML = `
                             <h3 class="text-xl font-semibold text-gray-800 mb-3">${group}</h3>
                             <ol class="list-decimal list-inside text-gray-700">
-                                ${students.length > 0 ? students.map(s => `<li class="mb-1 text-sm md:text-base">${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
+                                ${students.length > 0 ? students.map((s, index) => `<li class="mb-1 p-2 rounded text-sm md:text-base ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}">${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
                             </ol>
                         `;
                         groupListsContainer.appendChild(groupList);
@@ -204,9 +204,9 @@
                 if (data.length === 0) {
                     missingStudentsList.innerHTML = '<p class="text-gray-500 text-center">No hay alumnos faltantes registrados.</p>';
                 } else {
-                    data.forEach(student => {
+                    data.forEach((student, index) => {
                         const listItem = document.createElement('li');
-                        listItem.className = 'bg-gray-50 p-4 rounded-lg flex justify-between items-center shadow-sm';
+                        listItem.className = `p-4 rounded-lg flex justify-between items-center shadow-sm ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`;
                         listItem.innerHTML = `
                             <div>
                                 <span class="font-medium text-gray-700 text-sm md:text-base">${student.nombre}</span>
