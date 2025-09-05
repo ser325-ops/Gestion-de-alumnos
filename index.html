@@ -160,7 +160,7 @@
                         groupList.innerHTML = `
                             <h3 class="text-xl font-semibold text-gray-800 mb-3">${group}</h3>
                             <ol class="list-decimal list-inside text-gray-700">
-                                ${students.length > 0 ? students.map(s => `<li class="mb-1 flex items-center"><span class="block whitespace-nowrap w-full text-sm">${s}</span></li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
+                                ${students.length > 0 ? students.map(s => `<li class="mb-1 text-sm md:text-base">${s}</li>`).join('') : '<li class="text-sm italic text-gray-500">No hay alumnos en esta lista.</li>'}
                             </ol>
                         `;
                         groupListsContainer.appendChild(groupList);
@@ -213,7 +213,7 @@
                         listItem.className = 'bg-gray-50 p-4 rounded-lg flex justify-between items-center shadow-sm';
                         listItem.innerHTML = `
                             <div>
-                                <span class="font-medium text-gray-700">${student.nombre}</span>
+                                <span class="font-medium text-gray-700 text-sm md:text-base">${student.nombre}</span>
                                 <span class="text-sm text-gray-500 ml-2">(${student.grupo})</span>
                             </div>
                         `;
